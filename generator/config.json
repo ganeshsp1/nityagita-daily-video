@@ -1,0 +1,117 @@
+{
+  "play_store_url": "https://play.google.com/store/apps/details?id=com.ganesh.srimad_bhagvad_gita",
+  "website": "thenityagita.com",
+  "background_videos": [
+    "1773063215541065.mp4",
+    "1773063309624685.mp4",
+    "1773063471069809.mp4",
+    "1773063547791215.mp4",
+    "1773063599357093.mp4",
+    "1773063657090021.mp4",
+    "1773063682899565.mp4"
+  ],
+  "languages": {
+    "ml": {
+      "name": "Malayalam",
+      "native_name": "മലയാളം",
+      "data_file": "malayalam.json",
+      "app_title": "നിത്യ ഗീത",
+      "gita": "ഭഗവദ്ഗീത",
+      "chapter_label": "അദ്ധ്യായം {number}: {title}",
+      "find_your_peace": "നിങ്ങളുടെ സമാധാനം കണ്ടെത്തുക",
+      "download_app": "ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക",
+      "today_label": "ഇന്നത്തെ ശ്ലോകം",
+      "font_family": "'Noto Sans Malayalam', 'Malayalam Sangam MN'",
+      "hashtags": "#ഭഗവദ്ഗീത #ഗീത #കൃഷ്ണൻ #BhagavadGita #BhagavadGitaMalayalam #Krishna #Malayalam #NityaGita #shorts",
+      "tags": [
+        "ഭഗവദ്ഗീത",
+        "ഗീത",
+        "Bhagavad Gita Malayalam",
+        "Gita Malayalam",
+        "Krishna",
+        "Malayalam",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "hi": {
+      "name": "Hindi",
+      "native_name": "हिंदी",
+      "data_file": "hindi.json",
+      "app_title": "नित्य गीता",
+      "gita": "भगवद्गीता",
+      "chapter_label": "अध्याय {number}: {title}",
+      "find_your_peace": "अपनी शांति पाएँ",
+      "download_app": "ऐप डाउनलोड करें",
+      "today_label": "आज का श्लोक",
+      "font_family": "'Noto Sans Devanagari', 'Kohinoor Devanagari'",
+      "hashtags": "#भगवद्गीता #गीता #श्रीकृष्ण #BhagavadGita #GitaInHindi #Krishna #Hindi #NityaGita #shorts",
+      "tags": [
+        "भगवद्गीता",
+        "गीता",
+        "Bhagavad Gita Hindi",
+        "Gita in Hindi",
+        "Krishna",
+        "Hindi",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "ta": {
+      "name": "Tamil",
+      "native_name": "தமிழ்",
+      "data_file": "tamil.json",
+      "app_title": "நித்ய கீதா",
+      "gita": "பகவத் கீதை",
+      "chapter_label": "அத்தியாயம் {number}: {title}",
+      "find_your_peace": "உங்கள் அமைதியைக் கண்டறியுங்கள்",
+      "download_app": "செயலியை பதிவிறக்கவும்",
+      "today_label": "இன்றைய ஸ்லோகம்",
+      "font_family": "'Noto Sans Tamil', 'Tamil Sangam MN'",
+      "hashtags": "#பகவத்கீதை #கீதை #கிருஷ்ணா #BhagavadGita #BhagavadGitaTamil #Krishna #Tamil #NityaGita #shorts",
+      "tags": [
+        "பகவத் கீதை",
+        "கீதை",
+        "Bhagavad Gita Tamil",
+        "Gita Tamil",
+        "Krishna",
+        "Tamil",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "te": {
+      "name": "Telugu",
+      "native_name": "తెలుగు",
+      "data_file": "telugu.json",
+      "app_title": "నిత్య గీతా",
+      "gita": "భగవద్గీత",
+      "chapter_label": "అధ్యాయం {number}: {title}",
+      "find_your_peace": "మీ ప్రశాంతతను పొందండి",
+      "download_app": "యాప్‌ని డౌన్‌లోడ్ చేయండి",
+      "today_label": "నేటి శ్లోకం",
+      "font_family": "'Noto Sans Telugu', 'Telugu Sangam MN'",
+      "hashtags": "#భగవద్గీత #గీత #శ్రీకృష్ణ #BhagavadGita #BhagavadGitaTelugu #Krishna #Telugu #NityaGita #shorts",
+      "tags": [
+        "భగవద్గీత",
+        "గీత",
+        "Bhagavad Gita Telugu",
+        "Gita Telugu",
+        "Krishna",
+        "Telugu",
+        "Nitya Gita",
+        "shorts"
+      ]
+    }
+  },
+  "default_languages": [
+    "ml",
+    "hi",
+    "ta",
+    "te"
+  ],
+  "templates": {
+    "youtube_title": "{gita} {ref} | {today_label} | Bhagavad Gita {name} #shorts",
+    "caption": "🙏 {today_label} · {gita} {ref}\n{title} · {sloka_no}\n\n{content}\n\n{meaning}\n\n📲 {download_app} – {app_title}\n{link}\n\n{hashtags}"
+  }
+}
