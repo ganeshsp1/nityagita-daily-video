@@ -15,8 +15,6 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-PORT = 8765
-REDIRECT = f"http://127.0.0.1:{PORT}"
 SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 REPO = sys.argv[1] if len(sys.argv) > 1 else "ganeshsp1/nityagita-daily-video"
 client_id = os.environ.get("YT_CLIENT_ID") or input("OAuth client ID: ").strip()
@@ -36,13 +34,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
 
+# Bind first on a free port picked by the OS (Desktop clients accept any
+# loopback port), then build the redirect URL from it.
+server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+REDIRECT = f"http://127.0.0.1:{server.server_address[1]}"
+
 auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode({
     "client_id": client_id, "redirect_uri": REDIRECT, "response_type": "code",
     "scope": SCOPE, "access_type": "offline", "prompt": "consent",
 })
 print("Opening the browser. Pick the YouTube channel that should post the Shorts.")
 webbrowser.open(auth_url)
-http.server.HTTPServer(("127.0.0.1", PORT), Handler).handle_request()
+server.handle_request()
 
 body = urllib.parse.urlencode({
     "code": code_holder["code"], "client_id": client_id, "client_secret": client_secret,
