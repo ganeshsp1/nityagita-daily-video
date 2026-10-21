@@ -25,11 +25,11 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `IG_USER_ID`, `IG_ACCESS_TOKEN` | secrets | Instagram. Step skipped until set |
 
 ### YouTube (one time)
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable **YouTube Data API v3**.
-2. Configure the **OAuth consent screen**: External, add yourself as a test user, then **Publish app** (otherwise refresh tokens expire after 7 days).
-3. Create **Credentials → OAuth client ID → Desktop app**. Note the client ID and secret.
-4. On your computer: `YT_CLIENT_ID=... YT_CLIENT_SECRET=... python3 tools/get_youtube_token.py`, then sign in with the channel's Google account.
-5. Save the three values as repo secrets.
+Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data API v3 is already enabled.
+1. [Google Auth Platform → Branding](https://console.cloud.google.com/auth/branding?project=srimad-bhagawad-gita): set the app name and support email (skip if already set).
+2. [Audience](https://console.cloud.google.com/auth/audience?project=srimad-bhagawad-gita): User type **External**, then **Publish app** so it's *In production*. Otherwise refresh tokens expire after 7 days.
+3. [Clients](https://console.cloud.google.com/auth/clients?project=srimad-bhagawad-gita) → **Create client** → **Desktop app**, named e.g. "Shorts uploader".
+4. In Terminal: `python3 tools/get_youtube_token.py`. Paste the client ID and secret when asked, then sign in with the Google account that owns the channel and pick the channel. Google shows "hasn't verified this app": choose **Advanced → Go to …**, since it's your own app. The script saves all three secrets to this repo without printing them.
 
 ### Instagram (one time, after creating the account)
 1. Switch the account to **Professional → Creator** (or Business).

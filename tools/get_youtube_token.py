@@ -1,10 +1,14 @@
 """One-time helper, run on your own computer: signs in to the YouTube channel
-and prints the refresh token to save as the YT_REFRESH_TOKEN repo secret.
+and saves YT_CLIENT_ID, YT_CLIENT_SECRET and YT_REFRESH_TOKEN as secrets of
+this GitHub repo (via the gh CLI), without printing them.
 
-usage: YT_CLIENT_ID=... YT_CLIENT_SECRET=... python3 tools/get_youtube_token.py
+usage: python3 tools/get_youtube_token.py [owner/repo]
 The OAuth client must be of type "Desktop app" in Google Cloud Console.
 """
+import getpass
 import http.server
+import subprocess
+import sys
 import json
 import os
 import urllib.parse
@@ -14,8 +18,9 @@ import webbrowser
 PORT = 8765
 REDIRECT = f"http://127.0.0.1:{PORT}"
 SCOPE = "https://www.googleapis.com/auth/youtube.upload"
-client_id = os.environ["YT_CLIENT_ID"]
-client_secret = os.environ["YT_CLIENT_SECRET"]
+REPO = sys.argv[1] if len(sys.argv) > 1 else "ganeshsp1/nityagita-daily-video"
+client_id = os.environ.get("YT_CLIENT_ID") or input("OAuth client ID: ").strip()
+client_secret = os.environ.get("YT_CLIENT_SECRET") or getpass.getpass("OAuth client secret (hidden): ").strip()
 code_holder = {}
 
 
@@ -45,5 +50,7 @@ body = urllib.parse.urlencode({
 }).encode()
 with urllib.request.urlopen("https://oauth2.googleapis.com/token", body) as r:
     tokens = json.load(r)
-print("\nSave this as the YT_REFRESH_TOKEN secret (keep it private):\n")
-print(tokens["refresh_token"])
+for name, value in (("YT_CLIENT_ID", client_id), ("YT_CLIENT_SECRET", client_secret),
+                    ("YT_REFRESH_TOKEN", tokens["refresh_token"])):
+    subprocess.run(["gh", "secret", "set", name, "-R", REPO], input=value, text=True, check=True)
+print(f"\nSaved YT_CLIENT_ID, YT_CLIENT_SECRET and YT_REFRESH_TOKEN to {REPO}.")
