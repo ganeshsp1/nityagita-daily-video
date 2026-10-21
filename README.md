@@ -23,6 +23,7 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | secrets | YouTube upload. Step skipped until set |
 | `YT_PRIVACY` | variable | `private` (default) → `public` once you're happy |
 | `IG_USER_ID`, `IG_ACCESS_TOKEN` | secrets | Instagram. Step skipped until set |
+| `IG_REFRESH_PAT` | secret | Fine-grained GitHub token (this repo, Secrets read/write) for weekly token refresh |
 
 ### YouTube (one time)
 Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data API v3 is already enabled.
@@ -32,11 +33,13 @@ Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data A
 4. In Terminal: `python3 tools/get_youtube_token.py`. Paste the client ID and secret when asked, then sign in with the Google account that owns the channel and pick the channel. Google shows "hasn't verified this app": choose **Advanced → Go to …**, since it's your own app. The script saves all three secrets to this repo without printing them.
 
 ### Instagram (one time, after creating the account)
-1. Switch the account to **Professional → Creator** (or Business).
-2. At [developers.facebook.com](https://developers.facebook.com/), create an app and add the **Instagram** product (API setup with Instagram Login).
-3. Add the account as an Instagram tester and accept the invite in the Instagram app.
-4. Generate a token with `instagram_business_basic` and `instagram_business_content_publish`, then exchange it for a **long-lived token** (valid 60 days).
-5. Save `IG_USER_ID` and `IG_ACCESS_TOKEN` as repo secrets. Token auto-refresh is still TODO.
+1. In the Instagram app: **Settings → Account type and tools → Switch to professional account → Creator**.
+2. At [developers.facebook.com/apps](https://developers.facebook.com/apps/), **Create app** → use case **"Manage messaging & content on Instagram"** → create.
+3. In the app: **Instagram → API setup with Instagram login → Generate access tokens → Add account**, then log in to the Instagram account and **Generate token**. Copy it.
+4. Optional, for auto-refresh: create a [fine-grained GitHub token](https://github.com/settings/personal-access-tokens/new) for **only this repo** with **Secrets: Read and write**.
+5. In Terminal: `python3 tools/save_instagram_secrets.py`. Paste the Instagram token (and the GitHub token if you made one). It checks the token, finds the account ID and saves `IG_USER_ID`, `IG_ACCESS_TOKEN` (and `IG_REFRESH_PAT`) without printing them.
+
+The *Refresh Instagram token* workflow renews the 60-day token every Monday when `IG_REFRESH_PAT` is set.
 
 ## Running by hand
 Actions → *Daily verse video* → **Run workflow**. Optional inputs are date, languages and publish on/off.
