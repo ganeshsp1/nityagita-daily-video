@@ -2,7 +2,7 @@
 
 usage: python3 publish/youtube_upload.py <video.mp4> <meta.json>
 env:   YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (required)
-       YT_PRIVACY: private | unlisted | public (default: private)
+       YT_PRIVACY: private | unlisted | public (default: public)
 prints the video URL on success.
 """
 import json
@@ -39,7 +39,7 @@ def main():
             "defaultAudioLanguage": meta["lang"],
         },
         "status": {
-            "privacyStatus": os.environ.get("YT_PRIVACY", "private"),
+            "privacyStatus": os.environ.get("YT_PRIVACY", "public"),
             "selfDeclaredMadeForKids": False,
         },
     }

@@ -22,7 +22,7 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `GITA_WORKER_TOKEN` | secret | Read token the app uses |
 | `VIDEO_LANGS` | variable | Optional, e.g. `ml hi ta te` (default from config) |
 | `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | secrets | YouTube upload. Step skipped until set |
-| `YT_PRIVACY` | variable | `private` (default) → `public` once you're happy |
+| `YT_PRIVACY` | variable | `public` (default), `unlisted` or `private` |
 | `IG_USER_ID`, `IG_ACCESS_TOKEN` | secrets | Instagram. Step skipped until set |
 | `IG_REFRESH_PAT` | secret | Fine-grained GitHub token (this repo, Secrets read/write) for weekly token refresh |
 
