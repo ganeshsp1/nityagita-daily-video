@@ -15,6 +15,10 @@ on:
         description: "Post to YouTube / Instagram"
         type: boolean
         default: true
+      platforms:
+        description: "Where to post (space-separated)"
+        required: false
+        default: "youtube instagram"
 
 permissions:
   contents: write # create the daily release and commit the posted log
@@ -37,6 +41,7 @@ jobs:
       IG_USER_ID: ${{ secrets.IG_USER_ID }}
       IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+      PLATFORMS: ${{ inputs.platforms || 'youtube instagram' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -81,11 +86,17 @@ jobs:
           fi
           gh release upload "$TAG" --clobber "$WORK"/nityagita-"$DATE"-*.mp4
 
+      # Skips a language if the posted log already has a link for it today,
+      # so late scheduled runs and manual re-runs never post twice.
       - name: Upload to YouTube
-        if: env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != ''
+        if: env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != '' && contains(env.PLATFORMS, 'youtube')
         run: |
           FAILED=0
           for L in $LANGS; do
+            if [ -f "posted/${DATE:0:7}.jsonl" ] && jq -e --arg d "$DATE" --arg l "$L" \
+                'select(.date==$d and .lang==$l and .youtube != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
+              echo "$L already on YouTube for $DATE; skipping"; continue
+            fi
             if URL=$(python3 publish/youtube_upload.py "$WORK/$L/video.mp4" "$WORK/$L/meta.json"); then
               echo "$L youtube $URL"
               jq --arg u "$URL" '.youtube=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
@@ -96,11 +107,15 @@ jobs:
           exit $FAILED
 
       - name: Post to Instagram
-        if: env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != ''
+        if: env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != '' && contains(env.PLATFORMS, 'instagram')
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
           for L in $LANGS; do
+            if [ -f "posted/${DATE:0:7}.jsonl" ] && jq -e --arg d "$DATE" --arg l "$L" \
+                'select(.date==$d and .lang==$l and .instagram != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
+              echo "$L already on Instagram for $DATE; skipping"; continue
+            fi
             if URL=$(python3 publish/instagram_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
               echo "$L instagram $URL"
               jq --arg u "$URL" '.instagram=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
