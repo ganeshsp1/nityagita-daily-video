@@ -1,6 +1,6 @@
 # Nitya Gita: daily verse videos
 
-Every morning (06:00 IST) a GitHub Actions job builds the [Nitya Gita](https://play.google.com/store/apps/details?id=com.ganesh.srimad_bhagvad_gita) app's "verse of the day" as a vertical video in several languages, attaches the videos to a release, and posts them to YouTube Shorts (and Instagram Reels once configured).
+Every morning at 06:00 IST a Cloudflare Worker cron (`cloudflare/`) starts a GitHub Actions job that builds the [Nitya Gita](https://play.google.com/store/apps/details?id=com.ganesh.srimad_bhagvad_gita) app's "verse of the day" as a vertical video in several languages, attaches the videos to a release, and posts them to YouTube Shorts (and Instagram Reels once configured).
 
 The video matches the in-app status video: same verse of the day, card layout, recitation and meaning audio, and ffmpeg filter graph. Verse data, audio and backgrounds are downloaded from the app's storage at run time. **No app data is stored in this repo.**
 
@@ -13,6 +13,7 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `publish/instagram_post.py` | Publishes a Reel (Instagram API with Instagram Login) |
 | `tools/get_youtube_token.py` | One-time helper to get the YouTube refresh token |
 | `posted/YYYY-MM.jsonl` | Log of what was posted, written by the workflow |
+| `cloudflare/` | Cron Worker that starts the workflow at 06:00 IST (GitHub's own schedule, at 07:23 and 08:53 IST, is only a backup) |
 
 ## Settings (repo → Settings → Secrets and variables → Actions)
 | Name | Type | Notes |
@@ -40,6 +41,10 @@ Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data A
 5. In Terminal: `python3 tools/save_instagram_secrets.py`. Paste the Instagram token (and the GitHub token if you made one). It checks the token, finds the account ID and saves `IG_USER_ID`, `IG_ACCESS_TOKEN` (and `IG_REFRESH_PAT`) without printing them.
 
 The *Refresh Instagram token* workflow renews the 60-day token every Monday when `IG_REFRESH_PAT` is set.
+
+### Cloudflare trigger (one time)
+1. Give a fine-grained GitHub token (this repo only) **Actions: Read and write**. You can add it to the `nityagita-ig-refresh` token.
+2. `cd cloudflare && npx wrangler secret put GITHUB_TOKEN`, then paste the token.
 
 ## Running by hand
 Actions → *Daily verse video* → **Run workflow**. Optional inputs are date, languages and publish on/off.

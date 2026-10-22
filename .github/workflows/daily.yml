@@ -1,11 +1,10 @@
 name: Daily verse video
 
 on:
-  # GitHub delays or drops scheduled runs under load, so there are three
-  # tries. Whichever runs first posts; later ones find everything in the
-  # posted log and stop early.
+  # The main trigger is the Cloudflare Worker in cloudflare/ (06:00 IST).
+  # These GitHub schedules are backups in case it fails; GitHub often runs
+  # them late. Whichever run comes first posts; later ones stop early.
   schedule:
-    - cron: "23 0 * * *" # 05:53 IST
     - cron: "53 1 * * *" # 07:23 IST
     - cron: "23 3 * * *" # 08:53 IST
   workflow_dispatch:
@@ -20,6 +19,10 @@ on:
         description: "Post to YouTube / Instagram"
         type: boolean
         default: true
+      force:
+        description: "Re-generate even if today is already posted"
+        type: boolean
+        default: false
       platforms:
         description: "Where to post (space-separated)"
         required: false
@@ -71,7 +74,7 @@ jobs:
           echo "Date $DATE, languages: $LANGS"
 
       - name: Skip if today is already posted
-        if: github.event_name == 'schedule'
+        if: ${{ !inputs.force }}
         run: |
           LOG="posted/${DATE:0:7}.jsonl"
           for L in $LANGS; do

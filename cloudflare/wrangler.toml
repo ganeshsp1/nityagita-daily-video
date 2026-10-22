@@ -1,0 +1,10 @@
+name = "nityagita-daily-cron"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+[triggers]
+crons = ["30 0 * * *"] # 06:00 IST
+
+# Secret (set with `npx wrangler secret put GITHUB_TOKEN`):
+#   fine-grained GitHub token, this repo only, Actions: Read and write
