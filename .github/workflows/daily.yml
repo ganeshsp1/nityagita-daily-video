@@ -1,8 +1,13 @@
 name: Daily verse video
 
 on:
+  # GitHub delays or drops scheduled runs under load, so there are three
+  # tries. Whichever runs first posts; later ones find everything in the
+  # posted log and stop early.
   schedule:
-    - cron: "30 0 * * *" # 06:00 IST
+    - cron: "23 0 * * *" # 05:53 IST
+    - cron: "53 1 * * *" # 07:23 IST
+    - cron: "23 3 * * *" # 08:53 IST
   workflow_dispatch:
     inputs:
       date:
@@ -65,9 +70,27 @@ jobs:
           echo "WORK=$RUNNER_TEMP/work" >> "$GITHUB_ENV"
           echo "Date $DATE, languages: $LANGS"
 
+      - name: Skip if today is already posted
+        if: github.event_name == 'schedule'
+        run: |
+          LOG="posted/${DATE:0:7}.jsonl"
+          for L in $LANGS; do
+            for P in youtube instagram; do
+              [ "$P" = youtube ] && [ -z "$YT_REFRESH_TOKEN" ] && continue
+              [ "$P" = instagram ] && [ -z "$IG_ACCESS_TOKEN" ] && continue
+              if ! { [ -f "$LOG" ] && jq -e --arg d "$DATE" --arg l "$L" --arg p "$P" \
+                  'select(.date==$d and .lang==$l and .[$p] != null)' "$LOG" > /dev/null; }; then
+                echo "Still to post: $L on $P"; exit 0
+              fi
+            done
+          done
+          echo "Everything for $DATE is already posted."
+          echo "ALL_DONE=1" >> "$GITHUB_ENV"
+
       # Downloads go to the runner's temp folder, which is wiped after the run.
       # Never upload them as artifacts: artifacts in a public repo are public.
       - name: Generate videos
+        if: env.ALL_DONE != '1'
         run: |
           for L in $LANGS; do
             python3 generator/make_video.py --date "$DATE" --lang "$L" --out "$WORK/$L"
@@ -75,6 +98,7 @@ jobs:
           done
 
       - name: Publish release (public video URLs)
+        if: env.ALL_DONE != '1'
         run: |
           TAG="video-$DATE"
           if ! gh release view "$TAG" > /dev/null 2>&1; then
@@ -89,7 +113,7 @@ jobs:
       # Skips a language if the posted log already has a link for it today,
       # so late scheduled runs and manual re-runs never post twice.
       - name: Upload to YouTube
-        if: env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != '' && contains(env.PLATFORMS, 'youtube')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != '' && contains(env.PLATFORMS, 'youtube')
         run: |
           FAILED=0
           for L in $LANGS; do
@@ -107,7 +131,7 @@ jobs:
           exit $FAILED
 
       - name: Post to Instagram
-        if: env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != '' && contains(env.PLATFORMS, 'instagram')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != '' && contains(env.PLATFORMS, 'instagram')
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -128,7 +152,7 @@ jobs:
       # A commit per run also keeps the schedule alive: GitHub disables
       # scheduled workflows in public repos after 60 days without activity.
       - name: Record what was posted
-        if: always() && env.DATE != ''
+        if: always() && env.DATE != '' && env.ALL_DONE != '1'
         run: |
           mkdir -p posted
           for L in $LANGS; do
