@@ -102,13 +102,133 @@
         "Nitya Gita",
         "shorts"
       ]
+    },
+    "en": {
+      "name": "English",
+      "native_name": "English",
+      "data_file": "english.json",
+      "app_title": "Nitya Gita",
+      "gita": "Bhagavad Gita",
+      "chapter_label": "Chapter {number}: {title}",
+      "find_your_peace": "Find your peace at",
+      "download_app": "Download App",
+      "today_label": "Today's Shloka",
+      "font_family": "'Noto Sans'",
+      "youtube_title": "Bhagavad Gita {ref} | Today's Shloka | Krishna's Wisdom #shorts",
+      "hashtags": "#BhagavadGita #Gita #Krishna #GitaWisdom #Spirituality #Hinduism #NityaGita #shorts",
+      "tags": [
+        "Bhagavad Gita",
+        "Gita",
+        "Krishna",
+        "Bhagavad Gita English",
+        "Gita wisdom",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "kn": {
+      "name": "Kannada",
+      "native_name": "ಕನ್ನಡ",
+      "data_file": "kannada.json",
+      "app_title": "ನಿತ್ಯ ಗೀತಾ",
+      "gita": "ಭಗವದ್ಗೀತೆ",
+      "chapter_label": "ಅಧ್ಯಾಯ {number}: {title}",
+      "find_your_peace": "ನಿಮ್ಮ ಶಾಂತಿಯನ್ನು ಕಂಡುಕೊಳ್ಳಿ",
+      "download_app": "ಅಪ್ಲಿಕೇಶನ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+      "today_label": "ಇಂದಿನ ಶ್ಲೋಕ",
+      "font_family": "'Noto Sans Kannada', 'Kannada Sangam MN'",
+      "hashtags": "#ಭಗವದ್ಗೀತೆ #ಗೀತೆ #ಶ್ರೀಕೃಷ್ಣ #BhagavadGita #BhagavadGitaKannada #Krishna #Kannada #NityaGita #shorts",
+      "tags": [
+        "ಭಗವದ್ಗೀತೆ",
+        "ಗೀತೆ",
+        "Bhagavad Gita Kannada",
+        "Gita Kannada",
+        "Krishna",
+        "Kannada",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "mr": {
+      "name": "Marathi",
+      "native_name": "मराठी",
+      "data_file": "marathi.json",
+      "app_title": "नित्य गीता",
+      "gita": "भगवद्गीता",
+      "chapter_label": "अध्याय {number}: {title}",
+      "find_your_peace": "तुमची शांती शोधा",
+      "download_app": "ॲप डाउनलोड करा",
+      "today_label": "आजचा श्लोक",
+      "font_family": "'Noto Sans Devanagari', 'Kohinoor Devanagari'",
+      "hashtags": "#भगवद्गीता #गीता #श्रीकृष्ण #BhagavadGita #GitaMarathi #Krishna #Marathi #NityaGita #shorts",
+      "tags": [
+        "भगवद्गीता",
+        "गीता",
+        "Bhagavad Gita Marathi",
+        "Gita Marathi",
+        "Krishna",
+        "Marathi",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "or": {
+      "name": "Odia",
+      "native_name": "ଓଡ଼ିଆ",
+      "data_file": "odia.json",
+      "app_title": "ନିତ୍ୟ ଗୀତା",
+      "gita": "ଭଗବଦ୍ଗୀତା",
+      "chapter_label": "ଅଧ୍ୟାୟ {number}: {title}",
+      "find_your_peace": "ଆପଣଙ୍କର ଶାନ୍ତି ଖୋଜନ୍ତୁ",
+      "download_app": "ଆପ୍ ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
+      "today_label": "ଆଜିର ଶ୍ଲୋକ",
+      "font_family": "'Noto Sans Oriya', 'Oriya Sangam MN'",
+      "hashtags": "#ଭଗବଦ୍ଗୀତା #ଗୀତା #ଶ୍ରୀକୃଷ୍ଣ #BhagavadGita #BhagavadGitaOdia #Krishna #Odia #NityaGita #shorts",
+      "tags": [
+        "ଭଗବଦ୍ଗୀତା",
+        "ଗୀତା",
+        "Bhagavad Gita Odia",
+        "Gita Odia",
+        "Krishna",
+        "Odia",
+        "Nitya Gita",
+        "shorts"
+      ]
+    },
+    "bn": {
+      "name": "Bengali",
+      "native_name": "বাংলা",
+      "data_file": "bengali.json",
+      "app_title": "নিত্য গীতা",
+      "gita": "ভগবদ্গীতা",
+      "chapter_label": "অধ্যায় {number}: {title}",
+      "find_your_peace": "আপনার শান্তি খুঁজে নিন",
+      "download_app": "অ্যাপ ডাউনলোড করুন",
+      "today_label": "আজকের শ্লোক",
+      "font_family": "'Noto Sans Bengali', 'Bangla Sangam MN'",
+      "hashtags": "#ভগবদ্গীতা #গীতা #শ্রীকৃষ্ণ #BhagavadGita #GitaBangla #Krishna #Bengali #NityaGita #shorts",
+      "tags": [
+        "ভগবদ্গীতা",
+        "গীতা",
+        "Bhagavad Gita Bengali",
+        "Gita Bangla",
+        "Krishna",
+        "Bengali",
+        "Nitya Gita",
+        "shorts"
+      ]
     }
   },
   "default_languages": [
     "ml",
     "hi",
+    "en",
     "ta",
-    "te"
+    "te",
+    "kn",
+    "mr",
+    "or",
+    "bn"
   ],
   "templates": {
     "youtube_title": "{gita} {ref} | {today_label} | Bhagavad Gita {name} #shorts",

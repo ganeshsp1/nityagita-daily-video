@@ -106,8 +106,11 @@ def main():
 
     serial = int(chapter["ChapterSerial"])
     gita_chapter = serial - 2
-    title = (lang["chapter_label"].format(number=gita_chapter, title=chapter["Title"])
-             if serial > 2 else chapter["Title"])
+    raw_title = chapter["Title"]
+    # Some languages (e.g. Kannada) already include "Chapter N:" in the title.
+    has_number = re.search(rf"(?<!\d){gita_chapter}(?!\d)", to_ascii_digits(raw_title))
+    title = (lang["chapter_label"].format(number=gita_chapter, title=raw_title)
+             if serial > 2 and not has_number else raw_title)
     sloka_no = section["SlokaNumber"]
     speaker = section.get("Speaker") or ""
     content = section["Content"]
@@ -224,7 +227,7 @@ div{{position:absolute;top:30px;width:1080px;text-align:center;color:rgba(255,25
     fields = dict(lang, ref=ref, title=title, sloka_no=sloka_no, content=content,
                   meaning=meaning, link=link)
     caption = config["templates"]["caption"].format(**fields)
-    yt_title = config["templates"]["youtube_title"].format(**fields)
+    yt_title = lang.get("youtube_title", config["templates"]["youtube_title"]).format(**fields)
     if len(yt_title) > 100:  # YouTube limit; drop the English tail first
         yt_title = yt_title.split(" | Bhagavad Gita")[0] + " #shorts"
     meta = {
