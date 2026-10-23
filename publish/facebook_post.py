@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -45,7 +46,12 @@ def main():
         "description": meta["instagram_caption"], "access_token": TOKEN,
     })
     for _ in range(40):
-        status = get(vid, fields="status").get("status", {})
+        try:
+            status = get(vid, fields="status").get("status", {})
+        except urllib.error.HTTPError:
+            # The publish call already succeeded; status reads can fail transiently.
+            time.sleep(10)
+            continue
         if status.get("video_status") in ("ready", "published") or \
                 status.get("publishing_phase", {}).get("status") == "complete":
             break
