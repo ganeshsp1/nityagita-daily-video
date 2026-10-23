@@ -83,12 +83,12 @@ def playlist_for(lang_code, cache={}):
 
 
 def with_retry(fn, tries=6):
-    """A just-created playlist can return 404 for a few seconds."""
+    """New playlists can return 404/409 for a few seconds; 5xx are transient."""
     for attempt in range(tries):
         try:
             return fn()
         except urllib.error.HTTPError as e:
-            if e.code != 404 or attempt == tries - 1:
+            if e.code not in (404, 409, 500, 503) or attempt == tries - 1:
                 raise
             time.sleep(5)
 
