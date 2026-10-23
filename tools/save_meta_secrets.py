@@ -41,6 +41,11 @@ if MODE == "facebook":
     long_user = get("https://graph.facebook.com/v23.0/oauth/access_token",
                     grant_type="fb_exchange_token", client_id=app_id,
                     client_secret=app_secret, fb_exchange_token=user_token)["access_token"]
+    me = get("https://graph.facebook.com/v23.0/me", fields="id,name", metadata="1",
+             access_token=long_user)
+    if me.get("metadata", {}).get("type") == "page":
+        sys.exit("That is a Page token. In Graph API Explorer set 'User or Page' to "
+                 "'User Token', generate again, and re-run this helper.")
     pages = get("https://graph.facebook.com/v23.0/me/accounts",
                 fields="id,name,access_token", access_token=long_user).get("data", [])
     if not pages:
