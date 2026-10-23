@@ -11,6 +11,7 @@ env: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (token needs the
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,6 +33,7 @@ def access_token():
 
 
 TOKEN = None
+NEW_PLAYLISTS = set()
 
 
 def call(method, path, params=None, body=None):
@@ -75,19 +77,32 @@ def playlist_for(lang_code, cache={}):
         "status": {"privacyStatus": "public"},
     })
     print(f"created playlist {title}")
+    NEW_PLAYLISTS.add(created["id"])
     cache[lang_code] = created["id"]
     return created["id"]
 
 
+def with_retry(fn, tries=6):
+    """A just-created playlist can return 404 for a few seconds."""
+    for attempt in range(tries):
+        try:
+            return fn()
+        except urllib.error.HTTPError as e:
+            if e.code != 404 or attempt == tries - 1:
+                raise
+            time.sleep(5)
+
+
 def add_to_playlist(lang_code, vid):
     pid = playlist_for(lang_code)
-    existing = call("GET", "playlistItems", {"part": "contentDetails", "playlistId": pid,
-                                              "videoId": vid, "maxResults": 1})
-    if existing.get("items"):
-        return
-    call("POST", "playlistItems", {"part": "snippet"}, {
+    if pid not in NEW_PLAYLISTS:  # a new playlist is empty; nothing to check
+        existing = with_retry(lambda: call("GET", "playlistItems", {
+            "part": "contentDetails", "playlistId": pid, "videoId": vid, "maxResults": 1}))
+        if existing.get("items"):
+            return
+    with_retry(lambda: call("POST", "playlistItems", {"part": "snippet"}, {
         "snippet": {"playlistId": pid, "resourceId": {"kind": "youtube#video", "videoId": vid}},
-    })
+    }))
 
 
 def make_public(vid):
