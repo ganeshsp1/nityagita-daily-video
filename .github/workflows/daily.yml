@@ -38,7 +38,7 @@ concurrency:
 jobs:
   video:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       GITA_WORKER_URL: ${{ vars.GITA_WORKER_URL }}
       GITA_WORKER_TOKEN: ${{ secrets.GITA_WORKER_TOKEN }}
@@ -59,11 +59,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dart-lang/setup-dart@v1
-
-      - name: Install ffmpeg and Noto fonts
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-noto-core > /dev/null
 
       - name: Pick date and languages
         run: |
@@ -95,6 +90,21 @@ jobs:
           done
           echo "Everything for $DATE is already posted."
           echo "ALL_DONE=1" >> "$GITHUB_ENV"
+
+      # Ubuntu mirrors are occasionally very slow; cap each attempt and retry.
+      - name: Install ffmpeg and Noto fonts
+        if: env.ALL_DONE != '1'
+        run: |
+          for i in 1 2 3; do
+            if timeout 300 sudo apt-get update -qq -o Acquire::Retries=3 &&
+               timeout 300 sudo apt-get install -y -qq --no-install-recommends \
+                 -o Acquire::Retries=3 ffmpeg fonts-noto-core > /dev/null; then
+              exit 0
+            fi
+            echo "apt attempt $i failed or timed out; retrying"
+            sleep 10
+          done
+          exit 1
 
       # Downloads go to the runner's temp folder, which is wiped after the run.
       # Never upload them as artifacts: artifacts in a public repo are public.
