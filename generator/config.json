@@ -124,7 +124,8 @@
         "Gita wisdom",
         "Nitya Gita",
         "shorts"
-      ]
+      ],
+      "playlist_title_override": "Bhagavad Gita in English | Daily Shloka"
     },
     "kn": {
       "name": "Kannada",
@@ -232,6 +233,8 @@
   ],
   "templates": {
     "youtube_title": "{gita} {ref} | {today_label} | Bhagavad Gita {name} #shorts",
-    "caption": "🙏 {today_label} · {gita} {ref}\n{title} · {sloka_no}\n\n{content}\n\n{meaning}\n\n📲 {download_app} – {app_title}\n{link}\n\n{hashtags}"
+    "caption": "🙏 {today_label} · {gita} {ref}\n{title} · {sloka_no}\n\n{content}\n\n{meaning}\n\n📲 {download_app} – {app_title}\n{link}\n\n{hashtags}",
+    "playlist_title": "{gita} {native_name} | Bhagavad Gita {name} Daily Shloka",
+    "playlist_description": "One Bhagavad Gita shloka every day in {name}: Sanskrit verse, meaning and recitation. New Shorts daily at 6 AM IST.\n\nFree app (17 languages): https://play.google.com/store/apps/details?id=com.ganesh.srimad_bhagvad_gita\nhttps://thenityagita.com"
   }
 }

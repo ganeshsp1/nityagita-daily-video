@@ -1,0 +1,20 @@
+name: YouTube maintenance
+
+# Manual: makes every logged upload public and adds it to its language
+# playlist. Needs the YouTube token with the "youtube" (manage) permission.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    env:
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 publish/youtube_manage.py backfill posted/*.jsonl

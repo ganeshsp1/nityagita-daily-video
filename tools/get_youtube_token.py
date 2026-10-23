@@ -15,7 +15,8 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-SCOPE = "https://www.googleapis.com/auth/youtube.upload"
+# "youtube" covers uploading plus managing playlists and video visibility.
+SCOPE = "https://www.googleapis.com/auth/youtube"
 REPO = sys.argv[1] if len(sys.argv) > 1 else "ganeshsp1/nityagita-daily-video"
 client_id = os.environ.get("YT_CLIENT_ID") or input("OAuth client ID: ").strip()
 client_secret = os.environ.get("YT_CLIENT_SECRET") or getpass.getpass("OAuth client secret (hidden): ").strip()

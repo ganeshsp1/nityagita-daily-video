@@ -77,6 +77,17 @@ def esc(text):
     return html.escape(text).replace("\n", "<br>")
 
 
+def threads_text(f):
+    """Threads posts are limited to 500 characters; drop the meaning first."""
+    head = f"🙏 {f['today_label']} · {f['gita']} {f['ref']}\n{f['title']}"
+    tail = f"📲 {f['app_title']}: {f['link']}"
+    for body in (f"{f['content']}\n\n{f['meaning']}", f["content"], ""):
+        text = "\n\n".join(p for p in (head, body, tail) if p)
+        if len(text) <= 500:
+            return text
+    return text[:500]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", required=True)
@@ -241,6 +252,7 @@ div{{position:absolute;top:30px;width:1080px;text-align:center;color:rgba(255,25
         "description": caption.replace("<", "‹").replace(">", "›")[:4900],
         "instagram_caption": caption[:2150],
         "tags": lang["tags"],
+        "threads_text": threads_text(fields),
     }
     json.dump(meta, open(f"{out}/meta.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print(f"{args.lang}: Gita {ref} (section {section_count}), {final_dur:.1f}s -> {video_path}")

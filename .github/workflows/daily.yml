@@ -26,7 +26,7 @@ on:
       platforms:
         description: "Where to post (space-separated)"
         required: false
-        default: "youtube instagram"
+        default: "youtube instagram facebook threads"
 
 permissions:
   contents: write # create the daily release and commit the posted log
@@ -48,8 +48,12 @@ jobs:
       YT_PRIVACY: ${{ vars.YT_PRIVACY || 'public' }}
       IG_USER_ID: ${{ secrets.IG_USER_ID }}
       IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+      FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+      THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
-      PLATFORMS: ${{ inputs.platforms || 'youtube instagram' }}
+      PLATFORMS: ${{ inputs.platforms || 'youtube instagram facebook threads' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -78,9 +82,11 @@ jobs:
         run: |
           LOG="posted/${DATE:0:7}.jsonl"
           for L in $LANGS; do
-            for P in youtube instagram; do
+            for P in youtube instagram facebook threads; do
               [ "$P" = youtube ] && [ -z "$YT_REFRESH_TOKEN" ] && continue
               [ "$P" = instagram ] && [ -z "$IG_ACCESS_TOKEN" ] && continue
+              [ "$P" = facebook ] && [ -z "$FB_PAGE_TOKEN" ] && continue
+              [ "$P" = threads ] && [ -z "$THREADS_TOKEN" ] && continue
               if ! { [ -f "$LOG" ] && jq -e --arg d "$DATE" --arg l "$L" --arg p "$P" \
                   'select(.date==$d and .lang==$l and .[$p] != null)' "$LOG" > /dev/null; }; then
                 echo "Still to post: $L on $P"; exit 0
@@ -116,6 +122,7 @@ jobs:
       # Skips a language if the posted log already has a link for it today,
       # so late scheduled runs and manual re-runs never post twice.
       - name: Upload to YouTube
+        continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != '' && contains(env.PLATFORMS, 'youtube')
         run: |
           FAILED=0
@@ -126,6 +133,8 @@ jobs:
             fi
             if URL=$(python3 publish/youtube_upload.py "$WORK/$L/video.mp4" "$WORK/$L/meta.json"); then
               echo "$L youtube $URL"
+              python3 publish/youtube_manage.py add "$L" "$URL" \
+                || echo "::warning::Could not add $L to its playlist (re-run tools/get_youtube_token.py for the playlist permission)"
               jq --arg u "$URL" '.youtube=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
             else
               echo "::error::YouTube upload failed for $L"; FAILED=1
@@ -134,6 +143,7 @@ jobs:
           exit $FAILED
 
       - name: Post to Instagram
+        continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != '' && contains(env.PLATFORMS, 'instagram')
         run: |
           FAILED=0
@@ -152,6 +162,46 @@ jobs:
           done
           exit $FAILED
 
+      - name: Post to Facebook Page
+        continue-on-error: true
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.FB_PAGE_TOKEN != '' && contains(env.PLATFORMS, 'facebook')
+        run: |
+          FAILED=0
+          BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
+          for L in $LANGS; do
+            if [ -f "posted/${DATE:0:7}.jsonl" ] && jq -e --arg d "$DATE" --arg l "$L" \
+                'select(.date==$d and .lang==$l and .facebook != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
+              echo "$L already on Facebook for $DATE; skipping"; continue
+            fi
+            if URL=$(python3 publish/facebook_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
+              echo "$L facebook $URL"
+              jq --arg u "$URL" '.facebook=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
+            else
+              echo "::error::Facebook post failed for $L"; FAILED=1
+            fi
+          done
+          exit $FAILED
+
+      - name: Post to Threads
+        continue-on-error: true
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.THREADS_TOKEN != '' && contains(env.PLATFORMS, 'threads')
+        run: |
+          FAILED=0
+          BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
+          for L in $LANGS; do
+            if [ -f "posted/${DATE:0:7}.jsonl" ] && jq -e --arg d "$DATE" --arg l "$L" \
+                'select(.date==$d and .lang==$l and .threads != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
+              echo "$L already on Threads for $DATE; skipping"; continue
+            fi
+            if URL=$(python3 publish/threads_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
+              echo "$L threads $URL"
+              jq --arg u "$URL" '.threads=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
+            else
+              echo "::error::Threads post failed for $L"; FAILED=1
+            fi
+          done
+          exit $FAILED
+
       # A commit per run also keeps the schedule alive: GitHub disables
       # scheduled workflows in public repos after 60 days without activity.
       - name: Record what was posted
@@ -160,7 +210,7 @@ jobs:
           mkdir -p posted
           for L in $LANGS; do
             [ -f "$WORK/$L/meta.json" ] || continue
-            jq -c '{date, lang, ref, section_count, youtube_title, youtube, instagram}' "$WORK/$L/meta.json" >> "posted/${DATE:0:7}.jsonl"
+            jq -c '{date, lang, ref, section_count, youtube_title, youtube, instagram, facebook, threads}' "$WORK/$L/meta.json" >> "posted/${DATE:0:7}.jsonl"
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898199+github-actions[bot]@users.noreply.github.com"
