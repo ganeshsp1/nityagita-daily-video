@@ -14,6 +14,7 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `publish/accounts.py` | Picks each language's account (its own or the shared one) |
 | `tools/get_youtube_token.py` | One-time helper to get the YouTube refresh token |
 | `posted/YYYY-MM.jsonl` | Log of what was posted, written by the workflow |
+| `docs/instagram-accounts.md` | Checklist and profile text for the per-language Instagram accounts |
 | `cloudflare/` | Cron Worker that starts the workflow at 06:00 IST (GitHub's own schedule, at 07:23 and 08:53 IST, is only a backup) |
 
 ## Settings (repo → Settings → Secrets and variables → Actions)
