@@ -1,5 +1,6 @@
-work/
 __pycache__/
-*.mp4
+.DS_Store
 .wrangler/
+*.mp4
 node_modules/
+work/

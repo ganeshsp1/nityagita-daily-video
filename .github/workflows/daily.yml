@@ -37,6 +37,8 @@ concurrency:
 
 jobs:
   video:
+    # Forks have neither the secrets nor the accounts; only run scheduled jobs here.
+    if: github.event_name != 'schedule' || github.repository == 'ganeshsp1/nityagita-daily-video'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

@@ -59,3 +59,17 @@ python3 generator/make_video.py --date 2026-10-21 --lang ml --out work/ml
 - Secrets are only available to scheduled and manual runs, never to pull requests from forks.
 - Downloads go to the runner's temp folder and are never uploaded as artifacts.
 - Logs print only the verse reference and post links.
+
+## Contributing
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately, as described in [SECURITY.md](SECURITY.md).
+
+## License
+The code in this repository is licensed under the **[GNU Affero General Public License v3.0](LICENSE)** (AGPL-3.0-only). If you run a modified version, including as a hosted service, you must make your source available under the same license.
+
+**Not covered by the license:**
+- The **Nitya Gita** name, logo and app icon (`assets/app_icon.png`).
+- The app's content that the generator downloads at run time: verse text, translations and meanings, recitation and meaning audio, artwork and background videos. Some of it is under its own third-party terms.
+
+Using the code doesn't grant any right to use these. Bring your own content and branding.
+
+Copyright (C) 2026 ganeshsp1
