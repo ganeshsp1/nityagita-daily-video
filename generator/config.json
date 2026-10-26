@@ -231,6 +231,7 @@
     "or",
     "bn"
   ],
+  "shared_account_languages": {},
   "templates": {
     "youtube_title": "{gita} {ref} | {today_label} | Bhagavad Gita {name} #shorts",
     "caption": "🙏 {today_label} · {gita} {ref}\n{title} · {sloka_no}\n\n{content}\n\n{meaning}\n\n📲 {download_app} – {app_title}\n{link}\n\n{hashtags}",
