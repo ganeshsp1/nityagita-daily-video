@@ -14,6 +14,12 @@ One Instagram account per language, alongside the main **@the_nityagita** (which
 | `bn` | `the_nityagita_bengali` | Gita Bengali · নিত্য গীতা | ☐ created · ☐ Creator · ☐ in Meta app · ☐ secrets saved |
 | `or` | `the_nityagita_odia` | Gita Odia · ନିତ୍ୟ ଗୀତା | ☐ created · ☐ Creator · ☐ in Meta app · ☐ secrets saved |
 
+## Guided setup
+`python3 tools/instagram_account_helper.py` runs through the steps below for each language not yet done. At each step it opens the page in Chrome and copies the next value to the clipboard; you paste and click. At the end it asks for the token (hidden), checks it belongs to the right account, saves the secrets and can post the two latest videos as starter Reels. Progress is kept in `~/.nityagita_instagram_accounts.json`.
+
+- Specific languages: `python3 tools/instagram_account_helper.py ta te`
+- Account already created, only connect it: `python3 tools/instagram_account_helper.py --connect hi`
+
 ## Steps for each account
 1. **Create it from the main account** so no new email or phone is needed: Instagram app → Profile → ☰ → **Accounts Center → Accounts → Add accounts → Instagram → Create new account**. Pick the username above and choose to share login info with @the_nityagita.
    - Create **2–3 a day**, not all 8 at once. Many new accounts from one device in one sitting often triggers Instagram's spam checks.
