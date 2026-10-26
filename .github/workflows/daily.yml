@@ -69,8 +69,82 @@ jobs:
       # like IG_ACCESS_TOKEN_TA), else to the shared one. See publish/accounts.py.
       - name: Skip if today is already posted
         if: ${{ !inputs.force }}
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+        # Every account secret, listed by name: GitHub holds runs that pass
+        # toJSON(secrets) in a public repo. Regenerate with
+        # `python3 publish/accounts.py env-yaml` after adding a language.
+        env: &accounts
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_ML: ${{ secrets.YT_REFRESH_TOKEN_ML }}
+          YT_REFRESH_TOKEN_HI: ${{ secrets.YT_REFRESH_TOKEN_HI }}
+          YT_REFRESH_TOKEN_TA: ${{ secrets.YT_REFRESH_TOKEN_TA }}
+          YT_REFRESH_TOKEN_TE: ${{ secrets.YT_REFRESH_TOKEN_TE }}
+          YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN }}
+          YT_REFRESH_TOKEN_KN: ${{ secrets.YT_REFRESH_TOKEN_KN }}
+          YT_REFRESH_TOKEN_MR: ${{ secrets.YT_REFRESH_TOKEN_MR }}
+          YT_REFRESH_TOKEN_OR: ${{ secrets.YT_REFRESH_TOKEN_OR }}
+          YT_REFRESH_TOKEN_BN: ${{ secrets.YT_REFRESH_TOKEN_BN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID_ML: ${{ secrets.IG_USER_ID_ML }}
+          IG_ACCESS_TOKEN_ML: ${{ secrets.IG_ACCESS_TOKEN_ML }}
+          IG_USER_ID_HI: ${{ secrets.IG_USER_ID_HI }}
+          IG_ACCESS_TOKEN_HI: ${{ secrets.IG_ACCESS_TOKEN_HI }}
+          IG_USER_ID_TA: ${{ secrets.IG_USER_ID_TA }}
+          IG_ACCESS_TOKEN_TA: ${{ secrets.IG_ACCESS_TOKEN_TA }}
+          IG_USER_ID_TE: ${{ secrets.IG_USER_ID_TE }}
+          IG_ACCESS_TOKEN_TE: ${{ secrets.IG_ACCESS_TOKEN_TE }}
+          IG_USER_ID_EN: ${{ secrets.IG_USER_ID_EN }}
+          IG_ACCESS_TOKEN_EN: ${{ secrets.IG_ACCESS_TOKEN_EN }}
+          IG_USER_ID_KN: ${{ secrets.IG_USER_ID_KN }}
+          IG_ACCESS_TOKEN_KN: ${{ secrets.IG_ACCESS_TOKEN_KN }}
+          IG_USER_ID_MR: ${{ secrets.IG_USER_ID_MR }}
+          IG_ACCESS_TOKEN_MR: ${{ secrets.IG_ACCESS_TOKEN_MR }}
+          IG_USER_ID_OR: ${{ secrets.IG_USER_ID_OR }}
+          IG_ACCESS_TOKEN_OR: ${{ secrets.IG_ACCESS_TOKEN_OR }}
+          IG_USER_ID_BN: ${{ secrets.IG_USER_ID_BN }}
+          IG_ACCESS_TOKEN_BN: ${{ secrets.IG_ACCESS_TOKEN_BN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          FB_PAGE_ID_ML: ${{ secrets.FB_PAGE_ID_ML }}
+          FB_PAGE_TOKEN_ML: ${{ secrets.FB_PAGE_TOKEN_ML }}
+          FB_PAGE_ID_HI: ${{ secrets.FB_PAGE_ID_HI }}
+          FB_PAGE_TOKEN_HI: ${{ secrets.FB_PAGE_TOKEN_HI }}
+          FB_PAGE_ID_TA: ${{ secrets.FB_PAGE_ID_TA }}
+          FB_PAGE_TOKEN_TA: ${{ secrets.FB_PAGE_TOKEN_TA }}
+          FB_PAGE_ID_TE: ${{ secrets.FB_PAGE_ID_TE }}
+          FB_PAGE_TOKEN_TE: ${{ secrets.FB_PAGE_TOKEN_TE }}
+          FB_PAGE_ID_EN: ${{ secrets.FB_PAGE_ID_EN }}
+          FB_PAGE_TOKEN_EN: ${{ secrets.FB_PAGE_TOKEN_EN }}
+          FB_PAGE_ID_KN: ${{ secrets.FB_PAGE_ID_KN }}
+          FB_PAGE_TOKEN_KN: ${{ secrets.FB_PAGE_TOKEN_KN }}
+          FB_PAGE_ID_MR: ${{ secrets.FB_PAGE_ID_MR }}
+          FB_PAGE_TOKEN_MR: ${{ secrets.FB_PAGE_TOKEN_MR }}
+          FB_PAGE_ID_OR: ${{ secrets.FB_PAGE_ID_OR }}
+          FB_PAGE_TOKEN_OR: ${{ secrets.FB_PAGE_TOKEN_OR }}
+          FB_PAGE_ID_BN: ${{ secrets.FB_PAGE_ID_BN }}
+          FB_PAGE_TOKEN_BN: ${{ secrets.FB_PAGE_TOKEN_BN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USER_ID_ML: ${{ secrets.THREADS_USER_ID_ML }}
+          THREADS_TOKEN_ML: ${{ secrets.THREADS_TOKEN_ML }}
+          THREADS_USER_ID_HI: ${{ secrets.THREADS_USER_ID_HI }}
+          THREADS_TOKEN_HI: ${{ secrets.THREADS_TOKEN_HI }}
+          THREADS_USER_ID_TA: ${{ secrets.THREADS_USER_ID_TA }}
+          THREADS_TOKEN_TA: ${{ secrets.THREADS_TOKEN_TA }}
+          THREADS_USER_ID_TE: ${{ secrets.THREADS_USER_ID_TE }}
+          THREADS_TOKEN_TE: ${{ secrets.THREADS_TOKEN_TE }}
+          THREADS_USER_ID_EN: ${{ secrets.THREADS_USER_ID_EN }}
+          THREADS_TOKEN_EN: ${{ secrets.THREADS_TOKEN_EN }}
+          THREADS_USER_ID_KN: ${{ secrets.THREADS_USER_ID_KN }}
+          THREADS_TOKEN_KN: ${{ secrets.THREADS_TOKEN_KN }}
+          THREADS_USER_ID_MR: ${{ secrets.THREADS_USER_ID_MR }}
+          THREADS_TOKEN_MR: ${{ secrets.THREADS_TOKEN_MR }}
+          THREADS_USER_ID_OR: ${{ secrets.THREADS_USER_ID_OR }}
+          THREADS_TOKEN_OR: ${{ secrets.THREADS_TOKEN_OR }}
+          THREADS_USER_ID_BN: ${{ secrets.THREADS_USER_ID_BN }}
+          THREADS_TOKEN_BN: ${{ secrets.THREADS_TOKEN_BN }}
         run: |
           LOG="posted/${DATE:0:7}.jsonl"
           for L in $LANGS; do
@@ -128,8 +202,7 @@ jobs:
       - name: Upload to YouTube
         continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'youtube')
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+        env: *accounts
         run: |
           FAILED=0
           for L in $LANGS; do
@@ -152,8 +225,7 @@ jobs:
       - name: Post to Instagram
         continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'instagram')
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+        env: *accounts
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -175,8 +247,7 @@ jobs:
       - name: Post to Facebook Page
         continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'facebook')
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+        env: *accounts
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -198,8 +269,7 @@ jobs:
       - name: Post to Threads
         continue-on-error: true
         if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'threads')
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+        env: *accounts
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"

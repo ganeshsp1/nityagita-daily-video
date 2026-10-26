@@ -12,8 +12,11 @@ usage: python3 publish/accounts.py check <lang> <platform>
            runs the command with that account's variables set
        python3 publish/accounts.py which <lang> <platform>
            prints "own", "shared" or "none"
-env:   SECRETS_JSON (the workflow's toJSON(secrets)); falls back to the
-       process environment for local runs.
+       python3 publish/accounts.py env-yaml
+           prints the workflow env block listing every account secret
+env:   the account secrets (shared and per language) as environment variables.
+       Workflows must list them by name (see env-yaml): GitHub holds runs that
+       pass toJSON(secrets) in a public repo for approval.
 """
 import json
 import os
@@ -33,9 +36,18 @@ PLATFORMS = {
 
 
 def secrets():
-    raw = os.environ.get("SECRETS_JSON")
-    values = json.loads(raw) if raw else dict(os.environ)
-    return {k: v for k, v in values.items() if v}
+    return {k: v for k, v in os.environ.items() if v}
+
+
+def secret_names():
+    """Every shared and per-language account secret, in workflow order."""
+    names = []
+    for spec in PLATFORMS.values():
+        for n in spec["account"] + spec["common"]:
+            names.append(n)
+        for code in CONFIG["languages"]:
+            names += [f"{n}_{code.upper()}" for n in spec["account"]]
+    return names
 
 
 def resolve(lang, platform):
@@ -63,6 +75,10 @@ def resolve(lang, platform):
 
 
 def main():
+    if sys.argv[1:2] == ["env-yaml"]:
+        for n in secret_names():
+            print(f"{n}: ${{{{ secrets.{n} }}}}")
+        return
     cmd, lang, platform = sys.argv[1:4]
     kind, env = resolve(lang, platform)
     if cmd == "which":
@@ -73,7 +89,8 @@ def main():
         if kind == "none":
             sys.exit(f"{lang} has no {platform} account")
         command = sys.argv[sys.argv.index("--") + 1:]
-        os.environ.pop("SECRETS_JSON", None)  # the command only needs its own account
+        for n in secret_names():  # the command only gets its own account
+            os.environ.pop(n, None)
         os.environ.update(env)
         os.execvp(command[0], command)
     else:

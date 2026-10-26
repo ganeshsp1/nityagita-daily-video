@@ -12,7 +12,18 @@ jobs:
   backfill:
     runs-on: ubuntu-latest
     env:
-      SECRETS_JSON: ${{ toJSON(secrets) }}
+      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN_ML: ${{ secrets.YT_REFRESH_TOKEN_ML }}
+      YT_REFRESH_TOKEN_HI: ${{ secrets.YT_REFRESH_TOKEN_HI }}
+      YT_REFRESH_TOKEN_TA: ${{ secrets.YT_REFRESH_TOKEN_TA }}
+      YT_REFRESH_TOKEN_TE: ${{ secrets.YT_REFRESH_TOKEN_TE }}
+      YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN }}
+      YT_REFRESH_TOKEN_KN: ${{ secrets.YT_REFRESH_TOKEN_KN }}
+      YT_REFRESH_TOKEN_MR: ${{ secrets.YT_REFRESH_TOKEN_MR }}
+      YT_REFRESH_TOKEN_OR: ${{ secrets.YT_REFRESH_TOKEN_OR }}
+      YT_REFRESH_TOKEN_BN: ${{ secrets.YT_REFRESH_TOKEN_BN }}
     steps:
       - uses: actions/checkout@v4
       # Per language, since each language may be on its own channel.
