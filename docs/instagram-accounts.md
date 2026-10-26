@@ -19,6 +19,10 @@ One Instagram account per language, alongside the main **@the_nityagita** (which
 
 - Specific languages: `python3 tools/instagram_account_helper.py ta te`
 - Account already created, only connect it: `python3 tools/instagram_account_helper.py --connect hi`
+- Account already connected, only post the intro posts: `python3 tools/instagram_account_helper.py --intro-only hi`
+
+### Pinned intro posts
+Each account gets three posts to pin, in the same design as @the_nityagita's: **Welcome**, **Every morning at 6 AM** (what each Reel contains, plus a pointer to @the_nityagita for other languages) and **the app**. `python3 tools/make_intro_posts.py` renders them to `~/Desktop/NityaGita_Instagram/<lang>/` with captions, using text from `generator/intro_posts.json` (have a native speaker check it). The helper posts them in order 3, 2, 1, hosting the images on this repo's `intro-posts` release, and then lists the links to pin in that order so Welcome ends up first. The API can't pin, so pinning is done by hand: post → ⋯ → Pin to your profile.
 
 ## Steps for each account
 1. **Create it from the main account** so no new email or phone is needed: Instagram app → Profile → ☰ → **Accounts Center → Accounts → Add accounts → Instagram → Create new account**. Pick the username above and choose to share login info with @the_nityagita.

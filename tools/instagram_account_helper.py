@@ -4,11 +4,14 @@ to the clipboard; you paste and click. It never logs in or clicks for you.
 
 At the end of each language it asks for the account's token (hidden), checks
 it belongs to the right account, saves IG_USER_ID_<LANG> / IG_ACCESS_TOKEN_<LANG>
-as repo secrets, and can post the two latest videos as starter Reels.
+as repo secrets, and can post the two latest videos as starter Reels and the
+three intro posts to pin (rendered by tools/make_intro_posts.py).
 
 usage: python3 tools/instagram_account_helper.py [lang ...] [--connect] [--repo owner/repo]
        no languages = every language not yet done (progress is remembered)
        --connect: account already created; only save its token and post starters
+       --intro-only: only post the three intro posts (account already connected;
+                     asks for the token again)
 """
 import getpass
 import json
@@ -16,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -34,6 +38,12 @@ if "--repo" in args:
 CONNECT_ONLY = "--connect" in args
 if CONNECT_ONLY:
     args.remove("--connect")
+INTRO_ONLY = "--intro-only" in args
+if INTRO_ONLY:
+    args.remove("--intro-only")
+INTRO_DIR = os.path.expanduser("~/Desktop/NityaGita_Instagram")
+INTRO_RELEASE = "intro-posts"
+INTRO_POSTS = ["3_app", "2_daily", "1_welcome"]  # posting and pinning order; Welcome ends up first
 
 
 def profile(code):
@@ -116,6 +126,59 @@ def latest_videos(code, count=2):
     return list(reversed(found))
 
 
+def ig_post(path, token, **params):
+    params["access_token"] = token
+    req = urllib.request.Request(f"https://graph.instagram.com/{path}",
+                                 data=urllib.parse.urlencode(params).encode(), method="POST")
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.load(r)
+
+
+def post_intro(code, user_id, token):
+    """Renders (if needed), hosts and posts the three intro images, then explains pinning."""
+    folder = os.path.join(INTRO_DIR, code)
+    if not all(os.path.exists(os.path.join(folder, f"{n}.jpg")) for n in INTRO_POSTS):
+        subprocess.run([sys.executable, os.path.join(HERE, "make_intro_posts.py"), code], check=True)
+    captions = json.load(open(os.path.join(folder, "captions.json"), encoding="utf-8"))
+
+    # Instagram fetches images from a public URL; a release in this public repo hosts them.
+    if subprocess.run(["gh", "release", "view", INTRO_RELEASE, "-R", REPO],
+                      capture_output=True).returncode != 0:
+        subprocess.run(["gh", "release", "create", INTRO_RELEASE, "-R", REPO, "--title", "Instagram intro posts",
+                        "--notes", "Images for the pinned intro posts of each language's Instagram account."],
+                       check=True, capture_output=True)
+    files = []
+    for n in INTRO_POSTS:
+        named = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"intro-{code}-{n}.jpg")
+        subprocess.run(["cp", os.path.join(folder, f"{n}.jpg"), named], check=True)
+        files.append(named)
+    subprocess.run(["gh", "release", "upload", INTRO_RELEASE, "-R", REPO, "--clobber", *files],
+                   check=True, capture_output=True)
+
+    posted = []
+    for n in INTRO_POSTS:
+        url = f"https://github.com/{REPO}/releases/download/{INTRO_RELEASE}/intro-{code}-{n}.jpg"
+        try:
+            container = ig_post(f"{user_id}/media", token, image_url=url, caption=captions[n])["id"]
+            for _ in range(30):
+                if ig(container, token, fields="status_code").get("status_code") == "FINISHED":
+                    break
+                time.sleep(3)
+            media = ig_post(f"{user_id}/media_publish", token, creation_id=container)["id"]
+            link = ig(media, token, fields="permalink").get("permalink", media)
+            posted.append((n, link))
+            print(f"   ✓ {n}: {link}")
+        except urllib.error.HTTPError as e:
+            print(f"   ✗ {n} failed: {e.read().decode(errors='replace')[:300]}")
+            return
+        time.sleep(5)
+    print("   📌 Now pin them (the API can't): open each post → ⋯ → Pin to your profile,")
+    print("      in this order so Welcome ends up first:")
+    for i, (n, link) in enumerate(posted, 1):
+        print(f"      {i}. {link}")
+    chrome(f"https://www.instagram.com/")
+
+
 def connect(code, p):
     token = getpass.getpass(f"   Paste the token for @{p['handle']} (hidden): ").strip()
     try:
@@ -143,6 +206,8 @@ def connect(code, p):
                                     env=env, capture_output=True, text=True)
             print(f"   ✓ {result.stdout.strip()}" if result.returncode == 0
                   else f"   ✗ Post failed: {(result.stderr or result.stdout).strip()[:300]}")
+    if input("   Post the three intro posts to pin? [Y/n]: ").strip().lower() in ("", "y", "yes"):
+        post_intro(code, str(me["user_id"]), token)
     return True
 
 
@@ -151,6 +216,19 @@ def setup(code, handle=None):
     p["handle"] = handle or p["handle"]
     name = CONFIG["languages"][code]["name"]
     print(f"\n═══════ {name} · @{p['handle']} ═══════")
+    if INTRO_ONLY:
+        step(6, "Post the three intro posts")
+        token = getpass.getpass(f"   Paste the token for @{p['handle']} (hidden): ").strip()
+        try:
+            me = ig("me", token, fields="user_id,username")
+        except urllib.error.HTTPError as e:
+            print(f"   ✗ Instagram rejected the token: {e.read().decode(errors='replace')[:200]}")
+            return None
+        if me.get("username") != p["handle"]:
+            print(f"   ✗ That token is for @{me.get('username')}, not @{p['handle']}.")
+            return None
+        post_intro(code, str(me["user_id"]), token)
+        return p["handle"]
     if CONNECT_ONLY:
         step(5, "Save the token (copy it from the Meta app: Generate token)")
         chrome("https://developers.facebook.com/apps/")
@@ -214,8 +292,8 @@ def setup(code, handle=None):
 def main():
     progress = load_progress()
     codes = args or [c for c in ORDER if c not in progress]
-    if CONNECT_ONLY and not args:
-        sys.exit("--connect needs the language code(s), e.g. --connect hi")
+    if (CONNECT_ONLY or INTRO_ONLY) and not args:
+        sys.exit("--connect / --intro-only need the language code(s), e.g. --connect hi")
     unknown = [c for c in codes if c not in CONFIG["languages"]]
     if unknown:
         sys.exit(f"Unknown language codes: {' '.join(unknown)}")

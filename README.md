@@ -13,6 +13,7 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `publish/instagram_post.py` | Publishes a Reel (Instagram API with Instagram Login) |
 | `publish/accounts.py` | Picks each language's account (its own or the shared one) |
 | `tools/instagram_account_helper.py` | Guided setup of a per-language Instagram account (opens pages, copies text, saves the token) |
+| `tools/make_intro_posts.py` | Renders the three pinned intro posts per language (text in `generator/intro_posts.json`) |
 | `tools/get_youtube_token.py` | One-time helper to get the YouTube refresh token |
 | `posted/YYYY-MM.jsonl` | Log of what was posted, written by the workflow |
 | `docs/instagram-accounts.md` | Checklist and profile text for the per-language Instagram accounts |
