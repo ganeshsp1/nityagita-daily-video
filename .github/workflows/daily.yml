@@ -42,16 +42,7 @@ jobs:
     env:
       GITA_WORKER_URL: ${{ vars.GITA_WORKER_URL }}
       GITA_WORKER_TOKEN: ${{ secrets.GITA_WORKER_TOKEN }}
-      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
       YT_PRIVACY: ${{ vars.YT_PRIVACY || 'public' }}
-      IG_USER_ID: ${{ secrets.IG_USER_ID }}
-      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-      FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
-      FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
-      THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
-      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
       PLATFORMS: ${{ inputs.platforms || 'youtube instagram facebook threads' }}
       GH_TOKEN: ${{ github.token }}
@@ -72,16 +63,17 @@ jobs:
           echo "WORK=$RUNNER_TEMP/work" >> "$GITHUB_ENV"
           echo "Date $DATE, languages: $LANGS"
 
+      # Each language posts to its own account when it has one (secrets named
+      # like IG_ACCESS_TOKEN_TA), else to the shared one. See publish/accounts.py.
       - name: Skip if today is already posted
         if: ${{ !inputs.force }}
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           LOG="posted/${DATE:0:7}.jsonl"
           for L in $LANGS; do
             for P in youtube instagram facebook threads; do
-              [ "$P" = youtube ] && [ -z "$YT_REFRESH_TOKEN" ] && continue
-              [ "$P" = instagram ] && [ -z "$IG_ACCESS_TOKEN" ] && continue
-              [ "$P" = facebook ] && [ -z "$FB_PAGE_TOKEN" ] && continue
-              [ "$P" = threads ] && [ -z "$THREADS_TOKEN" ] && continue
+              python3 publish/accounts.py check "$L" "$P" || continue
               if ! { [ -f "$LOG" ] && jq -e --arg d "$DATE" --arg l "$L" --arg p "$P" \
                   'select(.date==$d and .lang==$l and .[$p] != null)' "$LOG" > /dev/null; }; then
                 echo "Still to post: $L on $P"; exit 0
@@ -133,7 +125,9 @@ jobs:
       # so late scheduled runs and manual re-runs never post twice.
       - name: Upload to YouTube
         continue-on-error: true
-        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.YT_REFRESH_TOKEN != '' && contains(env.PLATFORMS, 'youtube')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'youtube')
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           FAILED=0
           for L in $LANGS; do
@@ -141,9 +135,10 @@ jobs:
                 'select(.date==$d and .lang==$l and .youtube != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
               echo "$L already on YouTube for $DATE; skipping"; continue
             fi
-            if URL=$(python3 publish/youtube_upload.py "$WORK/$L/video.mp4" "$WORK/$L/meta.json"); then
+            python3 publish/accounts.py check "$L" youtube || { echo "$L has no youtube account; skipping"; continue; }
+            if URL=$(python3 publish/accounts.py run "$L" youtube -- python3 publish/youtube_upload.py "$WORK/$L/video.mp4" "$WORK/$L/meta.json"); then
               echo "$L youtube $URL"
-              python3 publish/youtube_manage.py add "$L" "$URL" \
+              python3 publish/accounts.py run "$L" youtube -- python3 publish/youtube_manage.py add "$L" "$URL" \
                 || echo "::warning::Could not add $L to its playlist (re-run tools/get_youtube_token.py for the playlist permission)"
               jq --arg u "$URL" '.youtube=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
             else
@@ -154,7 +149,9 @@ jobs:
 
       - name: Post to Instagram
         continue-on-error: true
-        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.IG_ACCESS_TOKEN != '' && contains(env.PLATFORMS, 'instagram')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'instagram')
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -163,7 +160,8 @@ jobs:
                 'select(.date==$d and .lang==$l and .instagram != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
               echo "$L already on Instagram for $DATE; skipping"; continue
             fi
-            if URL=$(python3 publish/instagram_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
+            python3 publish/accounts.py check "$L" instagram || { echo "$L has no instagram account; skipping"; continue; }
+            if URL=$(python3 publish/accounts.py run "$L" instagram -- python3 publish/instagram_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
               echo "$L instagram $URL"
               jq --arg u "$URL" '.instagram=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
             else
@@ -174,7 +172,9 @@ jobs:
 
       - name: Post to Facebook Page
         continue-on-error: true
-        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.FB_PAGE_TOKEN != '' && contains(env.PLATFORMS, 'facebook')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'facebook')
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -183,7 +183,8 @@ jobs:
                 'select(.date==$d and .lang==$l and .facebook != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
               echo "$L already on Facebook for $DATE; skipping"; continue
             fi
-            if URL=$(python3 publish/facebook_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
+            python3 publish/accounts.py check "$L" facebook || { echo "$L has no facebook account; skipping"; continue; }
+            if URL=$(python3 publish/accounts.py run "$L" facebook -- python3 publish/facebook_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
               echo "$L facebook $URL"
               jq --arg u "$URL" '.facebook=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
             else
@@ -194,7 +195,9 @@ jobs:
 
       - name: Post to Threads
         continue-on-error: true
-        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && env.THREADS_TOKEN != '' && contains(env.PLATFORMS, 'threads')
+        if: env.ALL_DONE != '1' && env.PUBLISH == 'true' && contains(env.PLATFORMS, 'threads')
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           FAILED=0
           BASE="https://github.com/${{ github.repository }}/releases/download/video-$DATE"
@@ -203,7 +206,8 @@ jobs:
                 'select(.date==$d and .lang==$l and .threads != null)' "posted/${DATE:0:7}.jsonl" > /dev/null; then
               echo "$L already on Threads for $DATE; skipping"; continue
             fi
-            if URL=$(python3 publish/threads_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
+            python3 publish/accounts.py check "$L" threads || { echo "$L has no threads account; skipping"; continue; }
+            if URL=$(python3 publish/accounts.py run "$L" threads -- python3 publish/threads_post.py "$BASE/nityagita-$DATE-$L.mp4" "$WORK/$L/meta.json"); then
               echo "$L threads $URL"
               jq --arg u "$URL" '.threads=$u' "$WORK/$L/meta.json" > "$WORK/$L/m" && mv "$WORK/$L/m" "$WORK/$L/meta.json"
             else

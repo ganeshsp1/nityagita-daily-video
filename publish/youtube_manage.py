@@ -3,8 +3,9 @@
 usage:
   python3 publish/youtube_manage.py add <lang> <video_url_or_id>
       Adds the video to the language's playlist (created if missing).
-  python3 publish/youtube_manage.py backfill <posted_log.jsonl>...
-      For every logged upload: make it public and add it to its playlist.
+  python3 publish/youtube_manage.py backfill [--lang <lang>] <posted_log.jsonl>...
+      For every logged upload (of one language, if given): make it public and
+      add it to its playlist. Use --lang when languages have their own channels.
 env: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (token needs the
      "youtube" scope; tools/get_youtube_token.py requests it).
 """
@@ -126,10 +127,13 @@ def main():
         if cmd == "add":
             add_to_playlist(sys.argv[2], video_id(sys.argv[3]))
         elif cmd == "backfill":
-            for path in sys.argv[2:]:
+            paths, only = sys.argv[2:], None
+            if paths[:1] == ["--lang"]:
+                only, paths = paths[1], paths[2:]
+            for path in paths:
                 for line in open(path, encoding="utf-8"):
                     entry = json.loads(line)
-                    if not entry.get("youtube"):
+                    if not entry.get("youtube") or (only and entry["lang"] != only):
                         continue
                     vid = video_id(entry["youtube"])
                     make_public(vid)

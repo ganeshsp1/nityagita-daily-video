@@ -14,38 +14,41 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     env:
-      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+      SECRETS_JSON: ${{ toJSON(secrets) }}
       GH_TOKEN: ${{ secrets.IG_REFRESH_PAT }}
     if: ${{ github.repository_owner == 'ganeshsp1' }}
     steps:
-      - name: Refresh and store the token
+      # Covers the shared token and every per-language one (IG_ACCESS_TOKEN_TA, ...).
+      - name: Refresh and store the Instagram tokens
         run: |
-          if [ -z "$IG_ACCESS_TOKEN" ] || [ -z "$GH_TOKEN" ]; then
-            echo "IG_ACCESS_TOKEN or IG_REFRESH_PAT not set; skipping."
-            exit 0
-          fi
-          RESP=$(curl -sS --fail-with-body -G "https://graph.instagram.com/refresh_access_token" \
-            --data-urlencode "grant_type=ig_refresh_token" \
-            --data-urlencode "access_token=$IG_ACCESS_TOKEN") || { echo "::error::Refresh failed"; exit 1; }
-          NEW=$(echo "$RESP" | jq -r '.access_token // empty')
-          [ -n "$NEW" ] || { echo "::error::No token in refresh response"; exit 1; }
-          echo "::add-mask::$NEW"
-          printf '%s' "$NEW" | gh secret set IG_ACCESS_TOKEN -R "${{ github.repository }}"
-          echo "Token refreshed; expires in $(echo "$RESP" | jq -r '.expires_in') seconds."
+          if [ -z "$GH_TOKEN" ]; then echo "IG_REFRESH_PAT not set; skipping."; exit 0; fi
+          FAILED=0
+          for NAME in $(echo "$SECRETS_JSON" | jq -r 'keys[] | select(test("^IG_ACCESS_TOKEN(_[A-Z]+)?$"))'); do
+            TOKEN=$(echo "$SECRETS_JSON" | jq -r --arg n "$NAME" '.[$n]')
+            RESP=$(curl -sS --fail-with-body -G "https://graph.instagram.com/refresh_access_token" \
+              --data-urlencode "grant_type=ig_refresh_token" \
+              --data-urlencode "access_token=$TOKEN") || { echo "::error::$NAME refresh failed"; FAILED=1; continue; }
+            NEW=$(echo "$RESP" | jq -r '.access_token // empty')
+            [ -n "$NEW" ] || { echo "::error::No token in $NAME refresh response"; FAILED=1; continue; }
+            echo "::add-mask::$NEW"
+            printf '%s' "$NEW" | gh secret set "$NAME" -R "${{ github.repository }}"
+            echo "$NAME refreshed; expires in $(echo "$RESP" | jq -r '.expires_in') seconds."
+          done
+          exit $FAILED
 
-      - name: Refresh and store the Threads token
+      - name: Refresh and store the Threads tokens
         run: |
-          if [ -z "$THREADS_TOKEN" ] || [ -z "$GH_TOKEN" ]; then
-            echo "THREADS_TOKEN or IG_REFRESH_PAT not set; skipping."
-            exit 0
-          fi
-          RESP=$(curl -sS --fail-with-body -G "https://graph.threads.net/refresh_access_token" \
-            --data-urlencode "grant_type=th_refresh_token" \
-            --data-urlencode "access_token=$THREADS_TOKEN") || { echo "::error::Threads refresh failed"; exit 1; }
-          NEW=$(echo "$RESP" | jq -r '.access_token // empty')
-          [ -n "$NEW" ] || { echo "::error::No token in Threads refresh response"; exit 1; }
-          echo "::add-mask::$NEW"
-          printf '%s' "$NEW" | gh secret set THREADS_TOKEN -R "${{ github.repository }}"
-          echo "Threads token refreshed."
-
+          if [ -z "$GH_TOKEN" ]; then echo "IG_REFRESH_PAT not set; skipping."; exit 0; fi
+          FAILED=0
+          for NAME in $(echo "$SECRETS_JSON" | jq -r 'keys[] | select(test("^THREADS_TOKEN(_[A-Z]+)?$"))'); do
+            TOKEN=$(echo "$SECRETS_JSON" | jq -r --arg n "$NAME" '.[$n]')
+            RESP=$(curl -sS --fail-with-body -G "https://graph.threads.net/refresh_access_token" \
+              --data-urlencode "grant_type=th_refresh_token" \
+              --data-urlencode "access_token=$TOKEN") || { echo "::error::$NAME refresh failed"; FAILED=1; continue; }
+            NEW=$(echo "$RESP" | jq -r '.access_token // empty')
+            [ -n "$NEW" ] || { echo "::error::No token in $NAME refresh response"; FAILED=1; continue; }
+            echo "::add-mask::$NEW"
+            printf '%s' "$NEW" | gh secret set "$NAME" -R "${{ github.repository }}"
+            echo "$NAME refreshed."
+          done
+          exit $FAILED

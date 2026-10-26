@@ -1,7 +1,9 @@
 """One-time helper, run on your own computer. Saves Facebook Page and/or
 Threads credentials as secrets of this GitHub repo without printing them.
 
-usage: python3 tools/save_meta_secrets.py facebook|threads [owner/repo]
+usage: python3 tools/save_meta_secrets.py facebook|threads [--lang <code>] [owner/repo]
+With --lang (e.g. --lang ta) the secrets are for that language's own Page or
+Threads account and get a _TA suffix.
 
 facebook: asks for the Meta app ID + secret and a user token from Graph API
   Explorer (permissions: pages_show_list, pages_read_engagement,
@@ -18,8 +20,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-MODE = sys.argv[1] if len(sys.argv) > 1 else ""
-REPO = sys.argv[2] if len(sys.argv) > 2 else "ganeshsp1/nityagita-daily-video"
+ARGS = sys.argv[1:]
+LANG = ARGS.pop(ARGS.index("--lang") + 1).lower() if "--lang" in ARGS else ""
+if LANG:
+    ARGS.remove("--lang")
+SUFFIX = f"_{LANG.upper()}" if LANG else ""  # per-language account, see publish/accounts.py
+MODE = ARGS[0] if ARGS else ""
+REPO = ARGS[1] if len(ARGS) > 1 else "ganeshsp1/nityagita-daily-video"
 
 
 def save(name, value):
@@ -53,15 +60,15 @@ if MODE == "facebook":
     for i, pg in enumerate(pages, 1):
         print(f"  {i}. {pg['name']}")
     choice = pages[int(input("Which Page posts the Reels? Number: ").strip()) - 1]
-    save("FB_PAGE_ID", choice["id"])
-    save("FB_PAGE_TOKEN", choice["access_token"])
-    print(f"Saved FB_PAGE_ID and FB_PAGE_TOKEN for '{choice['name']}' to {REPO}.")
+    save("FB_PAGE_ID" + SUFFIX, choice["id"])
+    save("FB_PAGE_TOKEN" + SUFFIX, choice["access_token"])
+    print(f"Saved FB_PAGE_ID{SUFFIX} and FB_PAGE_TOKEN{SUFFIX} for '{choice['name']}' to {REPO}.")
 elif MODE == "threads":
     token = getpass.getpass("Threads access token (hidden): ").strip()
     me = get("https://graph.threads.net/v1.0/me", fields="id,username", access_token=token)
     print(f"Token works for Threads @{me.get('username')}.")
-    save("THREADS_USER_ID", me["id"])
-    save("THREADS_TOKEN", token)
-    print(f"Saved THREADS_USER_ID and THREADS_TOKEN to {REPO}.")
+    save("THREADS_USER_ID" + SUFFIX, me["id"])
+    save("THREADS_TOKEN" + SUFFIX, token)
+    print(f"Saved THREADS_USER_ID{SUFFIX} and THREADS_TOKEN{SUFFIX} to {REPO}.")
 else:
     sys.exit(__doc__)

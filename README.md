@@ -11,8 +11,12 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `generator/config.json` | Languages, labels, hashtags, post templates |
 | `publish/youtube_upload.py` | Uploads a Short (YouTube Data API, resumable upload) |
 | `publish/instagram_post.py` | Publishes a Reel (Instagram API with Instagram Login) |
+| `publish/accounts.py` | Picks each language's account (its own or the shared one) |
+| `tools/instagram_account_helper.py` | Guided setup of a per-language Instagram account (opens pages, copies text, saves the token) |
+| `tools/make_intro_posts.py` | Renders the three pinned intro posts per language (text in `generator/intro_posts.json`) |
 | `tools/get_youtube_token.py` | One-time helper to get the YouTube refresh token |
 | `posted/YYYY-MM.jsonl` | Log of what was posted, written by the workflow |
+| `docs/instagram-accounts.md` | Checklist and profile text for the per-language Instagram accounts |
 | `cloudflare/` | Cron Worker that starts the workflow at 06:00 IST (GitHub's own schedule, at 07:23 and 08:53 IST, is only a backup) |
 
 ## Settings (repo → Settings → Secrets and variables → Actions)
@@ -25,6 +29,13 @@ The video matches the in-app status video: same verse of the day, card layout, r
 | `YT_PRIVACY` | variable | `public` (default), `unlisted` or `private` |
 | `IG_USER_ID`, `IG_ACCESS_TOKEN` | secrets | Instagram. Step skipped until set |
 | `IG_REFRESH_PAT` | secret | Fine-grained GitHub token (this repo, Secrets read/write) for weekly token refresh |
+
+### Separate accounts per language
+Any language can have its own YouTube channel, Instagram account, Facebook Page or Threads account. Add the same secrets with the language code appended, e.g. `YT_REFRESH_TOKEN_TA`, `IG_USER_ID_TA` + `IG_ACCESS_TOKEN_TA`, `FB_PAGE_ID_TA` + `FB_PAGE_TOKEN_TA`, `THREADS_USER_ID_TA` + `THREADS_TOKEN_TA`. The helpers below save them for you when given `--lang ta`. YouTube channels reuse the shared OAuth client, so only the refresh token is per language.
+
+Languages without their own account keep posting to the shared one. To stop that for a platform, list the languages that may still use the shared account in `generator/config.json`, e.g. `"shared_account_languages": {"instagram": ["en", "hi"]}`. A platform that isn't listed lets every language use it.
+
+Suggested setup for a new YouTube channel: in YouTube, create a channel (Brand Account) under the same Google account, then `YT_CLIENT_ID=... YT_CLIENT_SECRET=... python3 tools/get_youtube_token.py --lang ta` and pick the new channel. Each new Instagram account needs **Add account** in the Meta app (step 3 below), then `python3 tools/save_instagram_secrets.py --lang ta`. Facebook and Threads: `python3 tools/save_meta_secrets.py facebook --lang ta`.
 
 ### YouTube (one time)
 Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data API v3 is already enabled.
@@ -40,7 +51,7 @@ Uses the app's Google Cloud project `srimad-bhagawad-gita`, where YouTube Data A
 4. Optional, for auto-refresh: create a [fine-grained GitHub token](https://github.com/settings/personal-access-tokens/new) for **only this repo** with **Secrets: Read and write**.
 5. In Terminal: `python3 tools/save_instagram_secrets.py`. Paste the Instagram token (and the GitHub token if you made one). It checks the token, finds the account ID and saves `IG_USER_ID`, `IG_ACCESS_TOKEN` (and `IG_REFRESH_PAT`) without printing them.
 
-The *Refresh Instagram token* workflow renews the 60-day token every Monday when `IG_REFRESH_PAT` is set.
+The *Refresh Instagram token* workflow renews every Instagram and Threads token (shared and per language) every Monday when `IG_REFRESH_PAT` is set.
 
 ### Cloudflare trigger (one time)
 1. Give a fine-grained GitHub token (this repo only) **Actions: Read and write**. You can add it to the `nityagita-ig-refresh` token.

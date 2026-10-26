@@ -2,8 +2,11 @@
 and saves YT_CLIENT_ID, YT_CLIENT_SECRET and YT_REFRESH_TOKEN as secrets of
 this GitHub repo (via the gh CLI), without printing them.
 
-usage: python3 tools/get_youtube_token.py [owner/repo]
+usage: python3 tools/get_youtube_token.py [--lang <code>] [owner/repo]
 The OAuth client must be of type "Desktop app" in Google Cloud Console.
+With --lang (e.g. --lang ta), pick that language's own channel; only
+YT_REFRESH_TOKEN_TA is saved and the shared OAuth client is reused, so
+YT_CLIENT_ID/YT_CLIENT_SECRET must be in your environment or typed again.
 """
 import getpass
 import http.server
@@ -17,7 +20,12 @@ import webbrowser
 
 # "youtube" covers uploading plus managing playlists and video visibility.
 SCOPE = "https://www.googleapis.com/auth/youtube"
-REPO = sys.argv[1] if len(sys.argv) > 1 else "ganeshsp1/nityagita-daily-video"
+ARGS = sys.argv[1:]
+LANG = ARGS.pop(ARGS.index("--lang") + 1).lower() if "--lang" in ARGS else ""
+if LANG:
+    ARGS.remove("--lang")
+SUFFIX = f"_{LANG.upper()}" if LANG else ""  # per-language account, see publish/accounts.py
+REPO = ARGS[0] if ARGS else "ganeshsp1/nityagita-daily-video"
 client_id = os.environ.get("YT_CLIENT_ID") or input("OAuth client ID: ").strip()
 client_secret = os.environ.get("YT_CLIENT_SECRET") or getpass.getpass("OAuth client secret (hidden): ").strip()
 code_holder = {}
@@ -44,7 +52,7 @@ auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlenc
     "client_id": client_id, "redirect_uri": REDIRECT, "response_type": "code",
     "scope": SCOPE, "access_type": "offline", "prompt": "consent",
 })
-print("Opening the browser. Pick the YouTube channel that should post the Shorts.")
+print(f"Opening the browser. Pick the YouTube channel that should post the {LANG or 'shared'} Shorts.")
 webbrowser.open(auth_url)
 server.handle_request()
 
@@ -54,7 +62,9 @@ body = urllib.parse.urlencode({
 }).encode()
 with urllib.request.urlopen("https://oauth2.googleapis.com/token", body) as r:
     tokens = json.load(r)
-for name, value in (("YT_CLIENT_ID", client_id), ("YT_CLIENT_SECRET", client_secret),
-                    ("YT_REFRESH_TOKEN", tokens["refresh_token"])):
+values = [("YT_REFRESH_TOKEN" + SUFFIX, tokens["refresh_token"])]
+if not LANG:
+    values += [("YT_CLIENT_ID", client_id), ("YT_CLIENT_SECRET", client_secret)]
+for name, value in values:
     subprocess.run(["gh", "secret", "set", name, "-R", REPO], input=value, text=True, check=True)
-print(f"\nSaved YT_CLIENT_ID, YT_CLIENT_SECRET and YT_REFRESH_TOKEN to {REPO}.")
+print(f"\nSaved {', '.join(n for n, _ in values)} to {REPO}.")

@@ -12,9 +12,16 @@ jobs:
   backfill:
     runs-on: ubuntu-latest
     env:
-      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-      YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+      SECRETS_JSON: ${{ toJSON(secrets) }}
     steps:
       - uses: actions/checkout@v4
-      - run: python3 publish/youtube_manage.py backfill posted/*.jsonl
+      # Per language, since each language may be on its own channel.
+      - run: |
+          FAILED=0
+          for L in $(jq -r '.languages | keys[]' generator/config.json); do
+            python3 publish/accounts.py check "$L" youtube || continue
+            echo "== $L ($(python3 publish/accounts.py which "$L" youtube) channel)"
+            python3 publish/accounts.py run "$L" youtube -- \
+              python3 publish/youtube_manage.py backfill --lang "$L" posted/*.jsonl || FAILED=1
+          done
+          exit $FAILED
