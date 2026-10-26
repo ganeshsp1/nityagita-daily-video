@@ -14,7 +14,26 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     env:
-      SECRETS_JSON: ${{ toJSON(secrets) }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      IG_ACCESS_TOKEN_ML: ${{ secrets.IG_ACCESS_TOKEN_ML }}
+      IG_ACCESS_TOKEN_HI: ${{ secrets.IG_ACCESS_TOKEN_HI }}
+      IG_ACCESS_TOKEN_TA: ${{ secrets.IG_ACCESS_TOKEN_TA }}
+      IG_ACCESS_TOKEN_TE: ${{ secrets.IG_ACCESS_TOKEN_TE }}
+      IG_ACCESS_TOKEN_EN: ${{ secrets.IG_ACCESS_TOKEN_EN }}
+      IG_ACCESS_TOKEN_KN: ${{ secrets.IG_ACCESS_TOKEN_KN }}
+      IG_ACCESS_TOKEN_MR: ${{ secrets.IG_ACCESS_TOKEN_MR }}
+      IG_ACCESS_TOKEN_OR: ${{ secrets.IG_ACCESS_TOKEN_OR }}
+      IG_ACCESS_TOKEN_BN: ${{ secrets.IG_ACCESS_TOKEN_BN }}
+      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+      THREADS_TOKEN_ML: ${{ secrets.THREADS_TOKEN_ML }}
+      THREADS_TOKEN_HI: ${{ secrets.THREADS_TOKEN_HI }}
+      THREADS_TOKEN_TA: ${{ secrets.THREADS_TOKEN_TA }}
+      THREADS_TOKEN_TE: ${{ secrets.THREADS_TOKEN_TE }}
+      THREADS_TOKEN_EN: ${{ secrets.THREADS_TOKEN_EN }}
+      THREADS_TOKEN_KN: ${{ secrets.THREADS_TOKEN_KN }}
+      THREADS_TOKEN_MR: ${{ secrets.THREADS_TOKEN_MR }}
+      THREADS_TOKEN_OR: ${{ secrets.THREADS_TOKEN_OR }}
+      THREADS_TOKEN_BN: ${{ secrets.THREADS_TOKEN_BN }}
       GH_TOKEN: ${{ secrets.IG_REFRESH_PAT }}
     if: ${{ github.repository_owner == 'ganeshsp1' }}
     steps:
@@ -23,8 +42,9 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then echo "IG_REFRESH_PAT not set; skipping."; exit 0; fi
           FAILED=0
-          for NAME in $(echo "$SECRETS_JSON" | jq -r 'keys[] | select(test("^IG_ACCESS_TOKEN(_[A-Z]+)?$"))'); do
-            TOKEN=$(echo "$SECRETS_JSON" | jq -r --arg n "$NAME" '.[$n]')
+          for NAME in $(compgen -e | grep -E '^IG_ACCESS_TOKEN(_[A-Z]+)?$'); do
+            TOKEN="${!NAME}"
+            [ -n "$TOKEN" ] || continue  # listed but not set
             RESP=$(curl -sS --fail-with-body -G "https://graph.instagram.com/refresh_access_token" \
               --data-urlencode "grant_type=ig_refresh_token" \
               --data-urlencode "access_token=$TOKEN") || { echo "::error::$NAME refresh failed"; FAILED=1; continue; }
@@ -40,8 +60,9 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then echo "IG_REFRESH_PAT not set; skipping."; exit 0; fi
           FAILED=0
-          for NAME in $(echo "$SECRETS_JSON" | jq -r 'keys[] | select(test("^THREADS_TOKEN(_[A-Z]+)?$"))'); do
-            TOKEN=$(echo "$SECRETS_JSON" | jq -r --arg n "$NAME" '.[$n]')
+          for NAME in $(compgen -e | grep -E '^THREADS_TOKEN(_[A-Z]+)?$'); do
+            TOKEN="${!NAME}"
+            [ -n "$TOKEN" ] || continue  # listed but not set
             RESP=$(curl -sS --fail-with-body -G "https://graph.threads.net/refresh_access_token" \
               --data-urlencode "grant_type=th_refresh_token" \
               --data-urlencode "access_token=$TOKEN") || { echo "::error::$NAME refresh failed"; FAILED=1; continue; }
