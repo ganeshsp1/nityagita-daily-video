@@ -202,6 +202,16 @@ small{{margin-top:40px;font-size:38px;color:{NAVY};opacity:.7}}""",
     (Path(args.out) / f"{video}-{lang}.json").write_text(json.dumps(
         {"video": video, "lang": lang, "title": lines[0], "caption": caption, "draft": draft,
          "seconds": round(total, 1)}, ensure_ascii=False, indent=1), encoding="utf-8")
+    # What promo/post.py hands to the platform posters.
+    lang_cfg = config["languages"].get(lang, {})
+    title = lines[0].rstrip(".?!।")
+    meta = {"lang": lang, "video": video,
+            "youtube_title": f"{title} | {lang_cfg.get('app_title', 'Nitya Gita')}"[:95] + " #shorts",
+            "description": caption, "instagram_caption": caption, "threads_text": caption[:480],
+            "tags": list(dict.fromkeys(lang_cfg.get("tags", []) + ["Nitya Gita", "Bhagavad Gita app", "Gita app"]))[:15]}
+    (HERE / "meta").mkdir(exist_ok=True)
+    (HERE / "meta" / f"{video}-{lang}.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{out.name}: {total:.1f}s{' (draft: no voiceover yet)' if draft else ''}")
 
 
